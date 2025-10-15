@@ -1,8 +1,8 @@
 # Routines
 
-[![GitHub release](https://img.shields.io/github/v/release/devdinc/routines?label=version)](https://github.com/devdinc/routines/releases)
+[![GitHub release](https://img.shields.io/github/v/tag/devdinc/routines?label=version)](https://github.com/devdinc/routines/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![JitPack](https://img.shields.io/jitpack/v/github/devdinc/routines)](https://jitpack.io/#devdinc/routines)
+[![](https://jitpack.io/v/devdinc/routines.svg)](https://jitpack.io/#devdinc/routines)
 [![Java](https://img.shields.io/badge/Java-21+-blue)](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html)
 
 A lightweight, fluent Java library for scheduling and chaining asynchronous tasks.
