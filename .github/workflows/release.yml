@@ -5,6 +5,9 @@ on:
     tags:
       - '*'  # Trigger on any tag
 
+permissions:
+  contents: write  # Needed to create releases
+
 jobs:
   release:
     name: Create GitHub Release
