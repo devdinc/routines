@@ -1,5 +1,7 @@
 package com.devdinc.routines;
 
+import org.bukkit.plugin.Plugin;
+
 import java.time.LocalDateTime;
 import java.time.temporal.Temporal;
 import java.util.Arrays;
@@ -19,42 +21,50 @@ public class Routine<V> {
 	/** The internal CompletableFuture representing this routine's computation. */
 	protected final CompletableFuture<V> completableFuture;
 
+	/** The Paper plugin context associated with this routine. */
+	protected final Plugin plugin;
+
 	/**
-	 * Constructs a Routine wrapping a given CompletableFuture.
+	 * Constructs a Routine wrapping a given CompletableFuture and plugin context.
 	 *
-	 * @param completableFuture the underlying CompletableFuture
+	 * @param plugin             the plugin context (for scheduling)
+	 * @param completableFuture  the underlying CompletableFuture
 	 */
-	protected Routine(CompletableFuture<V> completableFuture) {
+	protected Routine(Plugin plugin, CompletableFuture<V> completableFuture) {
+		this.plugin = plugin;
 		this.completableFuture = completableFuture;
 	}
 
 	/**
 	 * Creates a new routine that will start execution at the specified temporal date/time.
 	 *
-	 * @param date the temporal anchor at which the routine starts
+	 * @param plugin the plugin context
+	 * @param date   the temporal anchor at which the routine starts
 	 * @return an {@link IncompleteRoutine} for configuring the task(s)
 	 */
-	public static IncompleteRoutine<Void> at(Temporal date) {
-		return new IncompleteRoutine<>(date, null);
+	public static IncompleteRoutine<Void> at(Plugin plugin, Temporal date) {
+		return new IncompleteRoutine<>(plugin, date, null);
 	}
 
 	/**
 	 * Creates a new routine that starts immediately.
 	 *
+	 * @param plugin the plugin context
 	 * @return an {@link IncompleteRoutine} ready for task configuration
 	 */
-	public static IncompleteRoutine<Void> now() {
-		return at(LocalDateTime.now());
+	public static IncompleteRoutine<Void> now(Plugin plugin) {
+		return at(plugin, LocalDateTime.now());
 	}
 
 	/**
 	 * Creates a new routine triggered by a cron expression.
 	 *
+	 * @param plugin         the plugin context
 	 * @param cronExpression the cron expression in standard Unix format
 	 * @return an {@link IncompleteRoutine} for scheduling the cron job
 	 */
-	public static IncompleteRoutine<Void> cron(String cronExpression) {
-		return CronRoutineDelegate.unix(cronExpression);
+	public static IncompleteRoutine<Void> cron(Plugin plugin, String cronExpression) {
+		return CronRoutineDelegate.unix(plugin, cronExpression);
 	}
 
 	/**
@@ -71,7 +81,9 @@ public class Routine<V> {
 	 */
 	public static <A, B, R> Routine<R> combine(Routine<A> r1, Routine<B> r2, BiFunction<A, B, R> combiner) {
 		CompletableFuture<R> combined = r1.completableFuture.thenCombine(r2.completableFuture, combiner);
-		return new Routine<>(combined);
+		// prefer r1's plugin context, or fallback to r2’s
+		Plugin plugin = (r1.plugin != null) ? r1.plugin : r2.plugin;
+		return new Routine<>(plugin, combined);
 	}
 
 	/**
@@ -84,7 +96,8 @@ public class Routine<V> {
 		CompletableFuture<Void> all = CompletableFuture.allOf(
 				Arrays.stream(routines).map(r -> r.completableFuture).toArray(CompletableFuture[]::new)
 		);
-		return new Routine<>(all);
+		Plugin plugin = (routines.length > 0) ? routines[0].plugin : null;
+		return new Routine<>(plugin, all);
 	}
 
 	/**
@@ -97,7 +110,8 @@ public class Routine<V> {
 		CompletableFuture<Object> any = CompletableFuture.anyOf(
 				Arrays.stream(routines).map(r -> r.completableFuture).toArray(CompletableFuture[]::new)
 		);
-		return new Routine<>(any);
+		Plugin plugin = (routines.length > 0) ? routines[0].plugin : null;
+		return new Routine<>(plugin, any);
 	}
 
 	/**
@@ -108,7 +122,7 @@ public class Routine<V> {
 	 * @return an {@link IncompleteRoutine} representing the next stage
 	 */
 	public IncompleteRoutine<V> then() {
-		return new IncompleteRoutine<>(null, completableFuture);
+		return new IncompleteRoutine<>(plugin, null, completableFuture);
 	}
 
 	/**

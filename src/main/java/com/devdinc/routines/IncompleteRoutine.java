@@ -1,5 +1,9 @@
 package com.devdinc.routines;
 
+import org.bukkit.Location;
+import org.bukkit.entity.Entity;
+import org.bukkit.plugin.Plugin;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.Temporal;
@@ -27,6 +31,7 @@ public class IncompleteRoutine<V> {
 
 	private static final Executor DIRECT_EXECUTOR = Runnable::run;
 
+	private final Plugin plugin;
 	private final CompletableFuture<V> previousFuture;
 	private final Temporal temporalAnchor;
 	private final Executor asyncExecutor;
@@ -44,13 +49,21 @@ public class IncompleteRoutine<V> {
 	 * @param temporalAnchor the time to start execution (may be null)
 	 * @param previousFuture the previous stage's future (may be null)
 	 */
-	protected IncompleteRoutine(Temporal temporalAnchor, CompletableFuture<V> previousFuture) {
-		this(temporalAnchor, previousFuture, null, false, null, Duration.ZERO, Duration.ZERO);
+	protected IncompleteRoutine(Plugin plugin, Temporal temporalAnchor, CompletableFuture<V> previousFuture) {
+		this(plugin,
+				temporalAnchor,
+				previousFuture,
+				null,
+				false,
+				null,
+				Duration.ZERO,
+				Duration.ZERO);
 	}
 
 	/**
 	 * Full constructor used internally to create modified copies of this routine stage.
 	 *
+	 * @param plugin Bukkit plugin
 	 * @param temporalAnchor the time anchor
 	 * @param previousFuture the previous stage future
 	 * @param asyncExecutor  the executor for async execution
@@ -60,6 +73,7 @@ public class IncompleteRoutine<V> {
 	 * @param initialDelay   initial delay before first execution
 	 */
 	private IncompleteRoutine(
+			Plugin plugin,
 			Temporal temporalAnchor,
 			CompletableFuture<V> previousFuture,
 			Executor asyncExecutor,
@@ -68,6 +82,7 @@ public class IncompleteRoutine<V> {
 			Duration repeatInterval,
 			Duration initialDelay
 	) {
+		this.plugin = plugin;
 		this.temporalAnchor = temporalAnchor;
 		this.previousFuture = previousFuture;
 		this.asyncExecutor = asyncExecutor;
@@ -75,9 +90,51 @@ public class IncompleteRoutine<V> {
 		this.condition = condition;
 		this.repeatInterval = repeatInterval;
 		this.initialDelay = initialDelay;
+
+		globalExecutor = r -> plugin.getServer().getGlobalRegionScheduler().execute(plugin, r);
+
 	}
 
 	// ---- Configuration Methods ----
+
+	private final Executor globalExecutor;
+
+	/**
+	 * Configures this routine stage to execute synchronously using the global region scheduler.
+	 * This will execute the task on the main thread of the server.
+	 *
+	 * @return a new {@link IncompleteRoutine} instance configured for synchronous execution
+	 */
+	public IncompleteRoutine<V> sync(){
+		return new IncompleteRoutine<>(
+				plugin, temporalAnchor, previousFuture, globalExecutor,
+				true, condition, repeatInterval, initialDelay
+		);
+	}
+
+	/**
+	 * Configures this routine stage to execute synchronously using the entity's scheduler.
+	 * This will execute the task on the main thread of the server with the entity as the context.
+	 *
+	 * @param e the entity whose scheduler will be used
+	 * @return a new {@link IncompleteRoutine} instance configured for synchronous execution
+	 */
+	public IncompleteRoutine<V> syncAt(Entity e){
+		Executor executor = r -> e.getScheduler().execute(plugin, r, null, 1);
+		return async(executor);
+	}
+
+	/**
+	 * Configures this routine stage to execute synchronously using the region scheduler.
+	 * This will execute the task on the main thread of the server with the location as the context.
+	 *
+	 * @param l the location whose region scheduler will be used
+	 * @return a new {@link IncompleteRoutine} instance configured for synchronous execution
+	 */
+	public IncompleteRoutine<V> syncAt(Location l){
+		Executor executor = r -> plugin.getServer().getRegionScheduler().execute(plugin, l, r);
+		return async(executor);
+	}
 
 	/**
 	 * Configures this routine stage to execute asynchronously using the default executor.
@@ -86,7 +143,7 @@ public class IncompleteRoutine<V> {
 	 */
 	public IncompleteRoutine<V> async() {
 		return new IncompleteRoutine<>(
-				temporalAnchor, previousFuture, defaultAsyncExecutor(),
+				plugin, temporalAnchor, previousFuture, defaultAsyncExecutor(),
 				true, condition, repeatInterval, initialDelay
 		);
 	}
@@ -99,7 +156,7 @@ public class IncompleteRoutine<V> {
 	 */
 	public IncompleteRoutine<V> async(Executor executor) {
 		return new IncompleteRoutine<>(
-				temporalAnchor, previousFuture, executor,
+				plugin, temporalAnchor, previousFuture, executor,
 				true, condition, repeatInterval, initialDelay
 		);
 	}
@@ -112,7 +169,7 @@ public class IncompleteRoutine<V> {
 	 */
 	public IncompleteRoutine<V> conditional(Predicate<? super V> condition) {
 		return new IncompleteRoutine<>(
-				temporalAnchor, previousFuture, asyncExecutor,
+				plugin, temporalAnchor, previousFuture, asyncExecutor,
 				isAsync, condition, repeatInterval, initialDelay
 		);
 	}
@@ -125,7 +182,7 @@ public class IncompleteRoutine<V> {
 	 */
 	public IncompleteRoutine<V> after(Duration duration) {
 		return new IncompleteRoutine<>(
-				temporalAnchor, previousFuture, asyncExecutor,
+				plugin, temporalAnchor, previousFuture, asyncExecutor,
 				isAsync, condition, repeatInterval, nonNull(duration)
 		);
 	}
@@ -138,7 +195,7 @@ public class IncompleteRoutine<V> {
 	 */
 	public IncompleteRoutine<V> every(Duration duration) {
 		return new IncompleteRoutine<>(
-				temporalAnchor, previousFuture, asyncExecutor,
+				plugin, temporalAnchor, previousFuture, asyncExecutor,
 				isAsync, condition, nonNull(duration), initialDelay
 		);
 	}
@@ -209,7 +266,7 @@ public class IncompleteRoutine<V> {
 			scheduleLoop(task, null, executor, nextFuture, delay);
 		}
 
-		return new Routine<>(nextFuture);
+		return new Routine<>(plugin, nextFuture);
 	}
 
 	// ---- Internal Helpers ----
@@ -301,7 +358,7 @@ public class IncompleteRoutine<V> {
 
 	/** Returns the default executor for asynchronous execution using virtual threads. */
 	protected Executor defaultAsyncExecutor() {
-		return Executors.newThreadPerTaskExecutor(Thread.ofVirtual().factory());
+		return runnable -> plugin.getServer().getAsyncScheduler().runNow(plugin, (task) -> runnable.run());
 	}
 
 	/** Returns the default executor for scheduling tasks. */

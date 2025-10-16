@@ -1,5 +1,7 @@
 package com.devdinc.routines;
 
+import org.bukkit.plugin.Plugin;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -23,10 +25,11 @@ public final class CronRoutineDelegate {
 	 * <p>
 	 * Accepts lists of values(?,?), ranges(0-5 including *), and steps(?/n).
 	 *
+	 * @param plugin
 	 * @param cronExpression the cron expression to parse
 	 * @return an IncompleteRoutine that will run at the next scheduled time
 	 */
-	public static IncompleteRoutine<Void> unix(String cronExpression) {
+	public static IncompleteRoutine<Void> unix(Plugin plugin, String cronExpression) {
 		String[] parts = cronExpression.trim().split("\\s+");
 		if (parts.length != 5)
 			throw new IllegalArgumentException("Invalid cron: " + cronExpression);
@@ -62,7 +65,7 @@ public final class CronRoutineDelegate {
 		else if (hasRepetition(fields.get("month"))) unit = ChronoUnit.MONTHS;
 		else unit = ChronoUnit.YEARS;
 
-		IncompleteRoutine<Void> routine = Routine.at(firstTime).every(unit.getDuration().multipliedBy(interval));
+		IncompleteRoutine<Void> routine = Routine.at(plugin, firstTime).every(unit.getDuration().multipliedBy(interval));
 
 		// Composite conditional
 		Predicate<Void> composite = buildCompositeCondition(fields);
