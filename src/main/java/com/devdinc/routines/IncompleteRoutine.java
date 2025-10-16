@@ -236,6 +236,7 @@ public class IncompleteRoutine<V> {
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
 					nextFuture.completeExceptionally(e);
+					logIfSilent(e);
 					break;
 				}
 
@@ -255,18 +256,27 @@ public class IncompleteRoutine<V> {
 	) {
 		executor.execute(() -> {
 			try {
-				if (condition != null && !condition.test(input)) return;
-
-				final R result = task.apply(input);
-				if (repeatInterval.isZero() || result != null) {
-					completed.set(nextFuture.complete(result));
+				if (condition == null || condition.test(input)) {
+					final R result = task.apply(input);
+					if (repeatInterval.isZero() || result != null) {
+						completed.set(nextFuture.complete(result));
+					}
+				} else if (repeatInterval.isZero()) {
+					throw new RuntimeException("Condition not met");
 				}
 			} catch (Throwable t) {
 				nextFuture.completeExceptionally(t);
+				completed.set(true);
+				logIfSilent(t);
 			} finally {
 				latch.countDown();
 			}
 		});
+	}
+
+	private static void logIfSilent(Throwable t) {
+		System.err.printf("[%s] Routine error, Uncaught silent exception: %s%n", Thread.currentThread().getName(), t);
+		t.printStackTrace(System.err);
 	}
 
 	private Duration computeInitialDelay() {
