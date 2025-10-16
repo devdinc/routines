@@ -12,14 +12,22 @@ repositories {
         name = 'papermc'
         url = 'https://repo.papermc.io/repository/maven-public/'
     }
+     maven { url 'https://jitpack.io' }
     mavenCentral()
 }
 
+// Declare a placeholder for paperVersion, will be computed after dependencies are resolved
+ext.paperVersion = null
+
 dependencies {
     compileOnly 'io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT'
+
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    testImplementation 'com.github.MockBukkit:MockBukkit:v1.21-SNAPSHOT'
+    testImplementation 'io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT'
 }
 
 test {
