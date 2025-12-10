@@ -7,6 +7,12 @@ plugins {
 group = 'com.devdinc'
 version = scmVersion.version
 
+scmVersion {
+    checks {
+        snapshotDependencies = false
+    }
+}
+
 repositories {
     mavenCentral()
     maven {
