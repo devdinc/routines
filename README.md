@@ -22,7 +22,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.devdinc:routines:2.0.0'
+    implementation 'com.github.devdinc:routines:<version>'
 }
 ~~~
 
@@ -38,7 +38,7 @@ dependencies {
 <dependency>
     <groupId>com.github.devdinc</groupId>
     <artifactId>routines</artifactId>
-    <version>2.0.0</version>
+    <version>{version}</version>
 </dependency>
 ~~~
 
