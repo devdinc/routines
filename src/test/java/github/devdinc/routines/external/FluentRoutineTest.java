@@ -39,4 +39,15 @@ class FluentRoutineTest {
 
         latch.await();
     }
+
+    @Test
+    void testFluentRoutineJoin() {
+        RoutineService service = new RoutineService();
+
+        String result = service.fluent(Instant.now())
+                .supply(() -> "Hello")
+                .join();
+
+        assertEquals(result, "Hello");
+    }
 }

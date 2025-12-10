@@ -25,7 +25,7 @@ public class VirtualSchedulerSchedulingConfiguration implements SchedulingConfig
 
     @Override
     public Scheduler scheduler() {
-        return (task, after, every) -> {
+        return (task, after, every, iContext) -> {
             GenericCancellable token = new GenericCancellable();
 
             Thread.startVirtualThread(() -> {

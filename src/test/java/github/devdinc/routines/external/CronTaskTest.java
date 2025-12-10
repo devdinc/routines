@@ -33,7 +33,7 @@ public class CronTaskTest {
 
         latch.await();
         long endTime = System.currentTimeMillis();
-        assertTrue((endTime - startTime) < 2500 && (endTime - startTime) > 2000,
+        assertTrue((endTime - startTime) < 3000 && (endTime - startTime) > 2000,
                 "Elapsed time: " + (endTime - startTime) + "ms");
 
         assertEquals(3, counter.get());

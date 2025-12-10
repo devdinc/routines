@@ -134,7 +134,7 @@ Tasks can control their behavior upon encountering an `Exception` by overriding 
 | Strategy | Description |
 | :--- | :--- |
 | `Strategy.STOP_ALL` | **Stop All**: Cancels the current execution and any future repetitions. |
-| `Strategy.CONTINUE` | **Log and Continue**: The exception is logged, but the routine attempts to continue to the next scheduled execution. |
+| `Strategy.CONTINUE` | **Continue**: Routine continues to the next scheduled execution. |
 
 There is already implemented configurations for exception handling, CARRY, LOG_AND_CONTINUE, and LOG_AND_STOP.
 
@@ -160,4 +160,4 @@ public ExceptionHandleRecord onUncaughtException(Task<?, ?> task, Exception ex) 
 ---
 
 ## Future Development
-We plan to introduce composition methods similar to `CompletableFuture` (e.g., `thenCompose`, `handle`, `exceptionally`) to further enhance the flexibility and expressiveness of routine chaining.
+We plan to introduce composition methods similar to `CompletableFuture` (e.g., `thenCompose`, `handle`) to further enhance the flexibility and expressiveness of routine chaining.

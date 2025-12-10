@@ -39,6 +39,8 @@ public final class TaskBuilder<I> implements FluentRoutine<I> {
     private final List<BooleanSupplier> conditions = new ArrayList<>();
     private Temporal startTime;
 
+    private Object ctx;
+
     /** --- Constructors --- */
 
     public TaskBuilder(RoutineConfiguration config, Temporal startTime) {
@@ -160,6 +162,11 @@ public final class TaskBuilder<I> implements FluentRoutine<I> {
             public Scheduler scheduler() {
                 return config.getSc().scheduler();
             }
+
+            @Override
+            public Object context() {
+                return ctx;
+            }
         };
 
         t.scheduleExecution();
@@ -169,7 +176,13 @@ public final class TaskBuilder<I> implements FluentRoutine<I> {
     @SuppressWarnings("unchecked")
     @Override
     public I join() {
-        return (I) task.join();
+        return (I) previousBuilder.task.join();
+    }
+
+    @Override
+    public FluentRoutine<I> context(Object ctx) {
+        this.ctx = ctx;
+        return this;
     }
 
 }

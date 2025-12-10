@@ -96,6 +96,13 @@ public abstract class Task<I, O> extends MARC.ALL implements java.io.Serializabl
     // ------------------------------------------------------------
 
     /**
+     * @return Context that scheduler interacts with, great for custom schedulers.
+     */
+    protected Object context() { // Might pass it down to executor too, so not inside Schedu...Conf...tion.B
+        return null;
+    }
+
+    /**
      * The core operation performed by this task. This method must be implemented
      * by subclasses.
      *
@@ -408,7 +415,7 @@ public abstract class Task<I, O> extends MARC.ALL implements java.io.Serializabl
                 exec.execute(this::runInternalProtected);
             else
                 runInternalProtected();
-        }, delay, every);
+        }, delay, every, context());
 
         tokenRef.set(tok);
         return tok;

@@ -51,4 +51,7 @@ public interface FluentRoutine<I> {
     }
 
     I join();
+
+    /** Used for communicating with the scheduler. Eg. Folia */
+    FluentRoutine<I> context(Object ctx);
 }
