@@ -11,6 +11,10 @@ scmVersion {
     checks {
         snapshotDependencies = false
     }
+    repository {
+        customUsername = System.getenv("GITHUB_ACTOR") ?: System.getenv("GIT_USERNAME")
+        customPassword = System.getenv("GITHUB_TOKEN") ?: System.getenv("GIT_PASSWORD")
+    }
 }
 
 repositories {
