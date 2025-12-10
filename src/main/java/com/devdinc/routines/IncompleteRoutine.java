@@ -19,10 +19,14 @@ import java.util.function.Supplier;
  * <p>
  * Allows configuration of asynchronous execution, scheduling, repeated tasks,
  * conditional execution, and delays. Each configuration method returns a new
- * {@link IncompleteRoutine} instance to maintain immutability and fluent chaining.
+ * {@link IncompleteRoutine} instance to maintain immutability and fluent
+ * chaining.
  *
  * @param <V> the result type of the previous routine stage
+ * @deprecated This class is deprecated and will be removed in a future release.
+ *             Use the new implementation in {@link github.devdinc.routines.FluentRoutine} instead.
  */
+@Deprecated
 public class IncompleteRoutine<V> {
 
 	private static final Executor DIRECT_EXECUTOR = Runnable::run;
@@ -49,7 +53,8 @@ public class IncompleteRoutine<V> {
 	}
 
 	/**
-	 * Full constructor used internally to create modified copies of this routine stage.
+	 * Full constructor used internally to create modified copies of this routine
+	 * stage.
 	 *
 	 * @param temporalAnchor the time anchor
 	 * @param previousFuture the previous stage future
@@ -66,8 +71,7 @@ public class IncompleteRoutine<V> {
 			boolean isAsync,
 			Predicate<? super V> condition,
 			Duration repeatInterval,
-			Duration initialDelay
-	) {
+			Duration initialDelay) {
 		this.temporalAnchor = temporalAnchor;
 		this.previousFuture = previousFuture;
 		this.asyncExecutor = asyncExecutor;
@@ -80,28 +84,30 @@ public class IncompleteRoutine<V> {
 	// ---- Configuration Methods ----
 
 	/**
-	 * Configures this routine stage to execute asynchronously using the default executor.
+	 * Configures this routine stage to execute asynchronously using the default
+	 * executor.
 	 *
-	 * @return a new {@link IncompleteRoutine} instance configured for async execution
+	 * @return a new {@link IncompleteRoutine} instance configured for async
+	 *         execution
 	 */
 	public IncompleteRoutine<V> async() {
 		return new IncompleteRoutine<>(
 				temporalAnchor, previousFuture, defaultAsyncExecutor(),
-				true, condition, repeatInterval, initialDelay
-		);
+				true, condition, repeatInterval, initialDelay);
 	}
 
 	/**
-	 * Configures this routine stage to execute asynchronously using a custom executor.
+	 * Configures this routine stage to execute asynchronously using a custom
+	 * executor.
 	 *
 	 * @param executor the executor to run tasks on
-	 * @return a new {@link IncompleteRoutine} instance configured for async execution
+	 * @return a new {@link IncompleteRoutine} instance configured for async
+	 *         execution
 	 */
 	public IncompleteRoutine<V> async(Executor executor) {
 		return new IncompleteRoutine<>(
 				temporalAnchor, previousFuture, executor,
-				true, condition, repeatInterval, initialDelay
-		);
+				true, condition, repeatInterval, initialDelay);
 	}
 
 	/**
@@ -113,8 +119,7 @@ public class IncompleteRoutine<V> {
 	public IncompleteRoutine<V> conditional(Predicate<? super V> condition) {
 		return new IncompleteRoutine<>(
 				temporalAnchor, previousFuture, asyncExecutor,
-				isAsync, condition, repeatInterval, initialDelay
-		);
+				isAsync, condition, repeatInterval, initialDelay);
 	}
 
 	/**
@@ -126,8 +131,7 @@ public class IncompleteRoutine<V> {
 	public IncompleteRoutine<V> after(Duration duration) {
 		return new IncompleteRoutine<>(
 				temporalAnchor, previousFuture, asyncExecutor,
-				isAsync, condition, repeatInterval, nonNull(duration)
-		);
+				isAsync, condition, repeatInterval, nonNull(duration));
 	}
 
 	/**
@@ -139,8 +143,7 @@ public class IncompleteRoutine<V> {
 	public IncompleteRoutine<V> every(Duration duration) {
 		return new IncompleteRoutine<>(
 				temporalAnchor, previousFuture, asyncExecutor,
-				isAsync, condition, nonNull(duration), initialDelay
-		);
+				isAsync, condition, nonNull(duration), initialDelay);
 	}
 
 	// ---- Terminal Operations ----
@@ -219,8 +222,7 @@ public class IncompleteRoutine<V> {
 			V prevResult,
 			Executor executor,
 			CompletableFuture<R> nextFuture,
-			Duration delay
-	) {
+			Duration delay) {
 		final Executor scheduler = defaultSchedulerExecutor();
 		scheduler.execute(() -> {
 			safeSleep(delay);
@@ -240,7 +242,8 @@ public class IncompleteRoutine<V> {
 					break;
 				}
 
-				if (completed.get() || repeatInterval.isZero()) break;
+				if (completed.get() || repeatInterval.isZero())
+					break;
 				safeSleep(repeatInterval);
 			}
 		});
@@ -252,8 +255,7 @@ public class IncompleteRoutine<V> {
 			Executor executor,
 			CompletableFuture<R> nextFuture,
 			AtomicBoolean completed,
-			CountDownLatch latch
-	) {
+			CountDownLatch latch) {
 		executor.execute(() -> {
 			try {
 				if (condition == null || condition.test(input)) {
@@ -289,7 +291,8 @@ public class IncompleteRoutine<V> {
 	}
 
 	private static void safeSleep(Duration duration) {
-		if (duration == null || duration.isZero() || duration.isNegative()) return;
+		if (duration == null || duration.isZero() || duration.isNegative())
+			return;
 		LockSupport.parkNanos(duration.toNanos());
 	}
 
@@ -299,7 +302,10 @@ public class IncompleteRoutine<V> {
 
 	// ---- Executors ----
 
-	/** Returns the default executor for asynchronous execution using virtual threads. */
+	/**
+	 * Returns the default executor for asynchronous execution using virtual
+	 * threads.
+	 */
 	protected Executor defaultAsyncExecutor() {
 		return Executors.newThreadPerTaskExecutor(Thread.ofVirtual().factory());
 	}
@@ -317,7 +323,6 @@ public class IncompleteRoutine<V> {
 				"IncompleteRoutine{previousFuture=%s, temporalAnchor=%s, asyncExecutor=%s, isAsync=%s, " +
 						"condition=%s, repeatInterval=%s, initialDelay=%s}",
 				previousFuture, temporalAnchor, asyncExecutor, isAsync,
-				condition, repeatInterval, initialDelay
-		);
+				condition, repeatInterval, initialDelay);
 	}
 }

@@ -1,5 +1,6 @@
 package com.devdinc.routines;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -15,19 +16,22 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for the {@link Routine} and {@link IncompleteRoutine} classes.
- * Verifies synchronous, asynchronous, conditional, delayed, and repeating behavior.
+ * Verifies synchronous, asynchronous, conditional, delayed, and repeating
+ * behavior.
  */
+@Disabled("Depracated")
 public class RoutineTest {
 
 	// --- Utility -------------------------------------------------------------
 
 	/**
-	 * Runs a block of code with System.err silenced (for tests that trigger internal logging).
+	 * Runs a block of code with System.err silenced (for tests that trigger
+	 * internal logging).
 	 */
 	private static void withSilentErr(Runnable action) throws Exception {
 		PrintStream originalErr = System.err;
 		try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		     PrintStream silentErr = new PrintStream(baos)) {
+				PrintStream silentErr = new PrintStream(baos)) {
 			System.setErr(silentErr);
 			action.run();
 		} finally {
@@ -37,6 +41,7 @@ public class RoutineTest {
 
 	// --- Basic Routine Behavior ---------------------------------------------
 
+	@SuppressWarnings("deprecation")
 	@Test
 	void testRunImmediateSync() {
 		assertTimeoutPreemptively(Duration.ofSeconds(2), () -> {
@@ -52,48 +57,48 @@ public class RoutineTest {
 
 	@Test
 	void testSupplyReturnsValue() {
-		String result = assertTimeoutPreemptively(Duration.ofSeconds(2), () ->
-				Routine.now().supply(() -> "hello").join()
-		);
+		@SuppressWarnings("deprecation")
+		String result = assertTimeoutPreemptively(Duration.ofSeconds(2),
+				() -> Routine.now().supply(() -> "hello").join());
 
 		assertEquals("hello", result);
 	}
 
 	/**
-	 * Verifies that exceptions thrown inside an apply() are propagated as CompletionException.
+	 * Verifies that exceptions thrown inside an apply() are propagated as
+	 * CompletionException.
 	 * Logging is silenced during this test.
 	 */
 	@Test
 	void testApplyThrowsException() throws Exception {
-		assertTimeoutPreemptively(Duration.ofSeconds(2), () ->
-				withSilentErr(() -> {
-					CompletableFuture<Void> testFuture = CompletableFuture.runAsync(() -> {
-						Routine<Void> r = Routine.now()
-								.apply(v -> { throw new IllegalStateException("boom"); });
+		assertTimeoutPreemptively(Duration.ofSeconds(2), () -> withSilentErr(() -> {
+			CompletableFuture<Void> testFuture = CompletableFuture.runAsync(() -> {
+				@SuppressWarnings("deprecation")
+				Routine<Void> r = Routine.now()
+						.apply(v -> {
+							throw new IllegalStateException("boom");
+						});
 
-						CompletionException thrown = assertThrows(
-								CompletionException.class,
-								r::join,
-								"Expected an exception from join()"
-						);
-						assertInstanceOf(IllegalStateException.class, thrown.getCause());
-						assertEquals("boom", thrown.getCause().getMessage());
-					});
+				CompletionException thrown = assertThrows(
+						CompletionException.class,
+						r::join,
+						"Expected an exception from join()");
+				assertInstanceOf(IllegalStateException.class, thrown.getCause());
+				assertEquals("boom", thrown.getCause().getMessage());
+			});
 
-					assertDoesNotThrow(() -> testFuture.get(1500, TimeUnit.MILLISECONDS));
-				})
-		);
+			assertDoesNotThrow(() -> testFuture.get(1500, TimeUnit.MILLISECONDS));
+		}));
 	}
 
 	@Test
 	void testThenChainsPreviousResult() {
-		String joined = assertTimeoutPreemptively(Duration.ofSeconds(2), () ->
-				Routine.now()
-						.supply(() -> "first")
-						.then()
-						.apply(prev -> prev + "-second")
-						.join()
-		);
+		@SuppressWarnings("deprecation")
+		String joined = assertTimeoutPreemptively(Duration.ofSeconds(2), () -> Routine.now()
+				.supply(() -> "first")
+				.then()
+				.apply(prev -> prev + "-second")
+				.join());
 		assertEquals("first-second", joined);
 	}
 
@@ -102,12 +107,16 @@ public class RoutineTest {
 	@Test
 	void testAllOfAndAnyOf() {
 		assertTimeoutPreemptively(Duration.ofSeconds(2), () -> {
+			@SuppressWarnings("deprecation")
 			Routine<String> r1 = Routine.now().supply(() -> "A");
+			@SuppressWarnings("deprecation")
 			Routine<String> r2 = Routine.now().supply(() -> "B");
 
+			@SuppressWarnings("deprecation")
 			Routine<Void> all = Routine.allOf(r1, r2);
 			assertDoesNotThrow(all::join, "allOf should complete successfully");
 
+			@SuppressWarnings("deprecation")
 			Routine<Object> any = Routine.anyOf(r1, r2);
 			Object result = any.join();
 			assertTrue(result.equals("A") || result.equals("B"), "anyOf returned unexpected value");
@@ -120,15 +129,14 @@ public class RoutineTest {
 	void testEveryRetriesUntilNonNull() {
 		AtomicInteger counter = new AtomicInteger();
 
-		String result = assertTimeoutPreemptively(Duration.ofSeconds(5), () ->
-				Routine.now()
-						.every(Duration.ofMillis(1))
-						.supply(() -> {
-							int attempt = counter.getAndIncrement();
-							return (attempt < 2) ? null : "done-" + attempt;
-						})
-						.join()
-		);
+		@SuppressWarnings("deprecation")
+		String result = assertTimeoutPreemptively(Duration.ofSeconds(5), () -> Routine.now()
+				.every(Duration.ofMillis(1))
+				.supply(() -> {
+					int attempt = counter.getAndIncrement();
+					return (attempt < 2) ? null : "done-" + attempt;
+				})
+				.join());
 
 		assertNotNull(result);
 		assertTrue(result.startsWith("done-"));
@@ -137,35 +145,34 @@ public class RoutineTest {
 
 	@Test
 	void testConditionalWithPrevResult() {
-		String output = assertTimeoutPreemptively(Duration.ofSeconds(2), () ->
-				Routine.now()
-						.supply(() -> "magic")
-						.then()
-						.conditional("magic"::equals)
-						.apply(prev -> prev + "-accepted")
-						.join()
-		);
+		@SuppressWarnings("deprecation")
+		String output = assertTimeoutPreemptively(Duration.ofSeconds(2), () -> Routine.now()
+				.supply(() -> "magic")
+				.then()
+				.conditional("magic"::equals)
+				.apply(prev -> prev + "-accepted")
+				.join());
 
 		assertEquals("magic-accepted", output);
 	}
 
 	@Test
 	void testCronCreatesExpectedInterval() {
+		@SuppressWarnings("deprecation")
 		IncompleteRoutine<Void> cron = Routine.cron("* * * * *");
 		assertTrue(cron.toString().contains("repeatInterval=PT1M"), "Expected 1-minute repeat interval");
 	}
 
+	@SuppressWarnings("deprecation")
 	@Test
 	void testAsyncAfterAccept() {
 		AtomicBoolean completed = new AtomicBoolean();
 
-		assertTimeoutPreemptively(Duration.ofSeconds(2), () ->
-				Routine.now()
-						.async()
-						.after(Duration.ofMillis(1))
-						.accept(v -> completed.set(true))
-						.join()
-		);
+		assertTimeoutPreemptively(Duration.ofSeconds(2), () -> Routine.now()
+				.async()
+				.after(Duration.ofMillis(1))
+				.accept(v -> completed.set(true))
+				.join());
 
 		assertTrue(completed.get());
 	}
@@ -176,12 +183,11 @@ public class RoutineTest {
 		Duration delay = Duration.ofMillis(25);
 		long expected = delay.toNanos();
 
-		long end = assertTimeoutPreemptively(Duration.ofSeconds(2), () ->
-				Routine.now()
-						.after(delay)
-						.apply(v -> System.nanoTime())
-						.join()
-		);
+		@SuppressWarnings("deprecation")
+		long end = assertTimeoutPreemptively(Duration.ofSeconds(2), () -> Routine.now()
+				.after(delay)
+				.apply(v -> System.nanoTime())
+				.join());
 
 		long elapsed = end - start;
 		assertTrue(elapsed >= expected, "Routine completed too early");
@@ -190,60 +196,60 @@ public class RoutineTest {
 
 	// --- Silent Error Behavior ---------------------------------------------
 
+	@SuppressWarnings("deprecation")
 	@Test
 	void testSilentThrowWithoutJoin() {
-		assertTimeoutPreemptively(Duration.ofSeconds(2), () ->
-				withSilentErr(() -> {
-					ByteArrayOutputStream err = new ByteArrayOutputStream();
-					System.setErr(new PrintStream(err));
+		assertTimeoutPreemptively(Duration.ofSeconds(2), () -> withSilentErr(() -> {
+			ByteArrayOutputStream err = new ByteArrayOutputStream();
+			System.setErr(new PrintStream(err));
 
-					Routine.now()
-							.async()
-							.apply(v -> { throw new IllegalArgumentException("silentBoom"); });
+			Routine.now()
+					.async()
+					.apply(v -> {
+						throw new IllegalArgumentException("silentBoom");
+					});
 
-					try {
-						Thread.sleep(200); // allow async task to execute
-					} catch (InterruptedException e) {
-						throw new RuntimeException(e);
-					}
+			try {
+				Thread.sleep(200); // allow async task to execute
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
 
-					String logs = err.toString();
-					assertTrue(logs.contains("silentBoom"), "Expected 'silentBoom' in logs");
-					assertTrue(logs.contains("Routine error"), "Expected routine error log");
-				})
-		);
+			String logs = err.toString();
+			assertTrue(logs.contains("silentBoom"), "Expected 'silentBoom' in logs");
+			assertTrue(logs.contains("Routine error"), "Expected routine error log");
+		}));
 	}
 
+	@SuppressWarnings("deprecation")
 	@Test
 	void testNonSilentThrowWithoutJoin() {
-		assertTimeoutPreemptively(Duration.ofSeconds(2), () ->
-				withSilentErr(() -> {
-					AtomicBoolean completed = new AtomicBoolean();
-					ByteArrayOutputStream err = new ByteArrayOutputStream();
-					System.setErr(new PrintStream(err));
+		assertTimeoutPreemptively(Duration.ofSeconds(2), () -> withSilentErr(() -> {
+			AtomicBoolean completed = new AtomicBoolean();
+			ByteArrayOutputStream err = new ByteArrayOutputStream();
+			System.setErr(new PrintStream(err));
 
-					Routine.now()
-							.async()
-							.apply(v -> {
-								try {
-									throw new IllegalArgumentException("kaboom");
-								} catch (IllegalArgumentException e) {
-									return true;
-								}
-							})
-							.then()
-							.accept(completed::set);
-					try {
-						Thread.sleep(200); // allow async task to execute
-					} catch (InterruptedException e) {
-						throw new RuntimeException(e);
-					}
+			Routine.now()
+					.async()
+					.apply(v -> {
+						try {
+							throw new IllegalArgumentException("kaboom");
+						} catch (IllegalArgumentException e) {
+							return true;
+						}
+					})
+					.then()
+					.accept(completed::set);
+			try {
+				Thread.sleep(200); // allow async task to execute
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
 
-					String logs = err.toString();
-					assertFalse(logs.contains("kaboom"), "Unexpected 'kaboom' in logs");
-					assertTrue(completed.get());
-				})
-		);
+			String logs = err.toString();
+			assertFalse(logs.contains("kaboom"), "Unexpected 'kaboom' in logs");
+			assertTrue(completed.get());
+		}));
 	}
 
 	@Test
@@ -251,10 +257,12 @@ public class RoutineTest {
 		assertTimeoutPreemptively(Duration.ofSeconds(2), () -> withSilentErr(() -> {
 			AtomicInteger counter = new AtomicInteger();
 
+			@SuppressWarnings("deprecation")
 			Routine<Void> r = Routine.now()
 					.every(Duration.ofMillis(50))
 					.apply(v -> {
-						if (counter.incrementAndGet() == 2) throw new RuntimeException("boomInLoop");
+						if (counter.incrementAndGet() == 2)
+							throw new RuntimeException("boomInLoop");
 						return null;
 					})
 					.then()

@@ -13,7 +13,10 @@ import java.util.function.BiFunction;
  * <p>Routines can be combined, executed concurrently, or run conditionally.
  *
  * @param <V> the result type of this routine stage
+ * @deprecated This class is deprecated and will be removed in a future release.
+ *             Use the new implementation in {@link github.devdinc.routines.FluentRoutine} instead.
  */
+@Deprecated
 public class Routine<V> {
 
 	/** The internal CompletableFuture representing this routine's computation. */

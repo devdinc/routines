@@ -9,6 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+/**
+ * @deprecated This class is deprecated and will be removed in a future release.
+ *             Use the new implementation in {@link github.devdinc.routines.FluentRoutine} instead.
+ */
+@Deprecated
 public final class CronRoutineDelegate {
 
 	/**
