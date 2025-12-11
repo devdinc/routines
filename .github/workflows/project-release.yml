@@ -1,0 +1,99 @@
+name: Commit-Driven Release
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract commit message
+        id: commit
+        run: |
+          MSG="${{ github.event.head_commit.message }}"
+          echo "msg=$MSG" >> $GITHUB_OUTPUT
+          echo "Commit message: $MSG"
+
+      # Parse directives like:
+      #   [release=2.0.0]
+      #   [release+=0.0.1]
+      - name: Parse release instruction
+        id: parse
+        run: |
+          MSG="${{ steps.commit.outputs.msg }}"
+
+          echo "do_release=false" >> $GITHUB_OUTPUT
+
+          if [[ "$MSG" =~ \[release=([0-9]+\.[0-9]+\.[0-9]+)\] ]]; then
+            echo "do_release=true" >> $GITHUB_OUTPUT
+            echo "mode=set" >> $GITHUB_OUTPUT
+            echo "target=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
+          elif [[ "$MSG" =~ \[release\+=([0-9]+\.[0-9]+\.[0-9]+)\] ]]; then
+            echo "do_release=true" >> $GITHUB_OUTPUT
+            echo "mode=add" >> $GITHUB_OUTPUT
+            echo "delta=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Stop if no release requested
+        if: steps.parse.outputs.do_release != 'true'
+        run: echo "No release directive found. Exiting."
+
+      - name: Read current version
+        id: version
+        if: steps.parse.outputs.do_release == 'true'
+        run: |
+          VERSION=$(grep "^version" gradle.properties | awk -F= '{print $2}')
+          echo "current=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Calculate new version
+        id: bump
+        if: steps.parse.outputs.do_release == 'true'
+        run: |
+          mode="${{ steps.parse.outputs.mode }}"
+          current="${{ steps.version.outputs.current }}"
+
+          if [ "$mode" = "set" ]; then
+            new="${{ steps.parse.outputs.target }}"
+          else
+            delta="${{ steps.parse.outputs.delta }}"
+
+            IFS='.' read -r cM cN cP <<< "$current"
+            IFS='.' read -r dM dN dP <<< "$delta"
+
+            new="$((cM + dM)).$((cN + dN)).$((cP + dP))"
+          fi
+
+          echo "new=$new" >> $GITHUB_OUTPUT
+          echo "Computed new version: $new"
+
+      - name: Update gradle.properties
+        if: steps.parse.outputs.do_release == 'true'
+        run: |
+          sed -i "s/version=.*/version=${{ steps.bump.outputs.new }}/" gradle.properties
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "github-actions"
+          git commit -am "Release ${{ steps.bump.outputs.new }}"
+          git push
+
+      - name: Tag release
+        if: steps.parse.outputs.do_release == 'true'
+        run: |
+          git tag "v${{ steps.bump.outputs.new }}"
+          git push --tags
+
+      - name: Create GitHub Release (no assets)
+        if: steps.parse.outputs.do_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.bump.outputs.new }}
+          body: "Automated release generated from commit message."

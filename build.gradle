@@ -1,21 +1,10 @@
 plugins {
-    id 'pl.allegro.tech.build.axion-release' version '1.18.7'
     id 'maven-publish'
     id 'java'
 }
 
 group = 'com.devdinc'
-version = scmVersion.version
-
-scmVersion {
-    checks {
-        snapshotDependencies = false
-    }
-    repository {
-        customUsername = System.getenv("GITHUB_ACTOR") ?: System.getenv("GIT_USERNAME")
-        customPassword = System.getenv("GITHUB_TOKEN") ?: System.getenv("GIT_PASSWORD")
-    }
-}
+version = '2.0.2'
 
 repositories {
     mavenCentral()

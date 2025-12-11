@@ -1,7 +1,7 @@
 # Routines
 [![GitHub release](https://img.shields.io/github/v/tag/devdinc/routines?label=version)](https://github.com/devdinc/routines/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![](https://jitpack.io/v/devdinc/routines.svg)](https://jitpack.io/#jitpack/routines)
+[![](https://jitpack.io/v/devdinc/routines.svg)](https://jitpack.io/#devdinc/routines)
 [![Java](https://img.shields.io/badge/Java-21+-blue)](https://www.oracle.com/java/technologies/javase/jdk21-archive-downloads.html)
 
 A lightweight, fluent Java library for scheduling, chaining, and class-based asynchronous tasks. Powered by Java 21+ virtual threads for high-concurrency performance.
@@ -44,15 +44,6 @@ dependencies {
 
 ---
 
-## Features
-* **Fluent API**: Chain tasks easily with `supply`, `apply`, and `accept`.
-* **Class-Based Tasks**: Define reusable, complex logic by extending `Task<I, O>`.
-* **Advanced Scheduling**: Support for Cron jobs, fixed delays, and periodic intervals.
-* **Virtual Thread Support**: Designed for high scalability using modern Java concurrency.
-* **Error Management**: Built-in strategies for exception handling.
-
----
-
 ## 1. Class-Based Routines
 For reusable logic, extend the abstract `Task<I, O>` class. This allows you to encapsulate state, configuration, and specific execution logic.
 
@@ -65,6 +56,13 @@ public class MyRepeatingTask extends Task<String, Integer> {
     @Override
     protected Integer apply(String input) {
         // Core execution logic: receives String, returns Integer
+        // For repeating Tasks:
+        // When apply returns a value that is:
+        // Non-null, and
+        // Not an instance of Result.Error<?, Exception>,
+        // the task is considered successfully completed, and Routines will:
+        // Finalize the current execution, and
+        // Automatically schedule the next execution based on the chain definition.
         return input.length();
     }
 
@@ -133,10 +131,10 @@ Tasks can control their behavior upon encountering an `Exception` by overriding 
 
 | Strategy | Description |
 | :--- | :--- |
-| `Strategy.STOP_ALL` | **Stop All**: Cancels the current execution and any future repetitions. |
+| `Strategy.STOP_ALL` | **Stop All**: Cancels the current execution and any future repetitions, doesn't chain into next task. |
 | `Strategy.CONTINUE` | **Continue**: Routine continues to the next scheduled execution. |
 
-There is already implemented configurations for exception handling, CARRY, LOG_AND_CONTINUE, and LOG_AND_STOP.
+There is already implemented configurations for exception handling: Carry, LogAndContinue, and LogAndStop.
 
 Example of overriding the default behavior:
 ~~~java
@@ -155,7 +153,7 @@ public ExceptionHandleRecord onUncaughtException(Task<?, ?> task, Exception ex) 
 | `task.join()` | Blocks the calling thread until the task completes and returns its final result. |
 | `task.join(Duration timeout)` | Blocks with a specified timeout. Throws `IllegalStateException` on timeout. |
 | `task.cancel()` | Cancels any scheduled repetitions and releases threads waiting on `join()`. |
-| `task.onComplete(Consumer)` | Non-blocking callback executed when the task and its chain complete. |
+| `task.onComplete(Consumer)` | Non-blocking callback executed when the task is complete. |
 
 ---
 
