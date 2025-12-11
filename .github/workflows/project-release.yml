@@ -16,6 +16,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0   # Needed to read tags
 
       # ------------------------------------------------------------
       # Extract commit message
@@ -28,7 +29,7 @@ jobs:
           echo "Commit message: $MSG"
 
       # ------------------------------------------------------------
-      # Parse release directives:
+      # Parse release commands in commit message:
       # [release=1.2.3]   -> set version
       # [release+=0.0.1]  -> increment version
       # ------------------------------------------------------------
@@ -53,36 +54,25 @@ jobs:
         run: echo "No release directive found. Exiting."
 
       # ------------------------------------------------------------
-      # Extract version from build.gradle
-      # Supports:
-      #   version = "1.2.3"
-      #   version = '1.2.3'
-      #   version = 1.2.3
+      # Detect current version from latest Git tag
+      # Tags must follow: v1.2.3
       # ------------------------------------------------------------
-      - name: Read current version from build.gradle
+      - name: Read current version from Git tag
         id: version
         if: steps.parse.outputs.do_release == 'true'
         run: |
-          if [ ! -f build.gradle ]; then
-            echo "ERROR: build.gradle not found"
-            exit 1
-          fi
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Latest tag: $TAG"
 
-          VERSION=$(grep -E "^version " build.gradle \
-            | sed -E "s/.*version *= *['\"]?([0-9]+\.[0-9]+\.[0-9]+)['\"]?/\1/")
-
-          if [ -z "$VERSION" ]; then
-            echo "ERROR: Could not parse version from build.gradle"
-            exit 1
-          fi
+          VERSION="${TAG#v}"   # remove "v"
 
           echo "current=$VERSION" >> $GITHUB_OUTPUT
           echo "Current version: $VERSION"
 
       # ------------------------------------------------------------
-      # Compute new version
+      # Compute the new version
       # ------------------------------------------------------------
-      - name: Calculate new version
+      - name: Compute new version
         id: bump
         if: steps.parse.outputs.do_release == 'true'
         run: |
@@ -102,27 +92,12 @@ jobs:
           echo "Computed new version: $new"
 
       # ------------------------------------------------------------
-      # Write updated version into build.gradle
+      # Run Gradle build with overridden version (NO COMMIT)
       # ------------------------------------------------------------
-      - name: Update version in build.gradle
+      - name: Build with release version
         if: steps.parse.outputs.do_release == 'true'
         run: |
-          if [ ! -f build.gradle ]; then
-            echo "ERROR: build.gradle not found"
-            exit 1
-          fi
-
-          new="${{ steps.bump.outputs.new }}"
-
-          # Replace version assignment
-          sed -i -E \
-            "s/^version *= *['\"]?[0-9]+\.[0-9]+\.[0-9]+['\"]?/version = '$new'/" \
-            build.gradle
-
-          git config --global user.email "github-actions@github.com"
-          git config --global user.name "github-actions"
-          git commit -am "Release $new"
-          git push
+          ./gradlew clean build -Pversion=${{ steps.bump.outputs.new }}
 
       # ------------------------------------------------------------
       # Tag release
