@@ -17,6 +17,9 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      # ------------------------------------------------------------
+      # Extract commit message
+      # ------------------------------------------------------------
       - name: Extract commit message
         id: commit
         run: |
@@ -24,14 +27,15 @@ jobs:
           echo "msg=$MSG" >> $GITHUB_OUTPUT
           echo "Commit message: $MSG"
 
-      # Parse directives like:
-      #   [release=2.0.0]
-      #   [release+=0.0.1]
+      # ------------------------------------------------------------
+      # Parse release directives:
+      # [release=1.2.3]   -> set version
+      # [release+=0.0.1]  -> increment version
+      # ------------------------------------------------------------
       - name: Parse release instruction
         id: parse
         run: |
           MSG="${{ steps.commit.outputs.msg }}"
-
           echo "do_release=false" >> $GITHUB_OUTPUT
 
           if [[ "$MSG" =~ \[release=([0-9]+\.[0-9]+\.[0-9]+)\] ]]; then
@@ -48,13 +52,36 @@ jobs:
         if: steps.parse.outputs.do_release != 'true'
         run: echo "No release directive found. Exiting."
 
-      - name: Read current version
+      # ------------------------------------------------------------
+      # Extract version from build.gradle
+      # Supports:
+      #   version = "1.2.3"
+      #   version = '1.2.3'
+      #   version = 1.2.3
+      # ------------------------------------------------------------
+      - name: Read current version from build.gradle
         id: version
         if: steps.parse.outputs.do_release == 'true'
         run: |
-          VERSION=$(grep "^version" gradle.properties | awk -F= '{print $2}')
-          echo "current=$VERSION" >> $GITHUB_OUTPUT
+          if [ ! -f build.gradle ]; then
+            echo "ERROR: build.gradle not found"
+            exit 1
+          fi
 
+          VERSION=$(grep -E "^version " build.gradle \
+            | sed -E "s/.*version *= *['\"]?([0-9]+\.[0-9]+\.[0-9]+)['\"]?/\1/")
+
+          if [ -z "$VERSION" ]; then
+            echo "ERROR: Could not parse version from build.gradle"
+            exit 1
+          fi
+
+          echo "current=$VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $VERSION"
+
+      # ------------------------------------------------------------
+      # Compute new version
+      # ------------------------------------------------------------
       - name: Calculate new version
         id: bump
         if: steps.parse.outputs.do_release == 'true'
@@ -66,34 +93,53 @@ jobs:
             new="${{ steps.parse.outputs.target }}"
           else
             delta="${{ steps.parse.outputs.delta }}"
-
             IFS='.' read -r cM cN cP <<< "$current"
             IFS='.' read -r dM dN dP <<< "$delta"
-
             new="$((cM + dM)).$((cN + dN)).$((cP + dP))"
           fi
 
           echo "new=$new" >> $GITHUB_OUTPUT
           echo "Computed new version: $new"
 
-      - name: Update gradle.properties
+      # ------------------------------------------------------------
+      # Write updated version into build.gradle
+      # ------------------------------------------------------------
+      - name: Update version in build.gradle
         if: steps.parse.outputs.do_release == 'true'
         run: |
-          sed -i "s/version=.*/version=${{ steps.bump.outputs.new }}/" gradle.properties
+          if [ ! -f build.gradle ]; then
+            echo "ERROR: build.gradle not found"
+            exit 1
+          fi
+
+          new="${{ steps.bump.outputs.new }}"
+
+          # Replace version assignment
+          sed -i -E \
+            "s/^version *= *['\"]?[0-9]+\.[0-9]+\.[0-9]+['\"]?/version = '$new'/" \
+            build.gradle
+
           git config --global user.email "github-actions@github.com"
           git config --global user.name "github-actions"
-          git commit -am "Release ${{ steps.bump.outputs.new }}"
+          git commit -am "Release $new"
           git push
 
+      # ------------------------------------------------------------
+      # Tag release
+      # ------------------------------------------------------------
       - name: Tag release
         if: steps.parse.outputs.do_release == 'true'
         run: |
           git tag "v${{ steps.bump.outputs.new }}"
           git push --tags
 
-      - name: Create GitHub Release (no assets)
+      # ------------------------------------------------------------
+      # GitHub Release
+      # ------------------------------------------------------------
+      - name: Create GitHub Release
         if: steps.parse.outputs.do_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.bump.outputs.new }}
-          body: "Automated release generated from commit message."
+          body: |
+            Automated release generated from commit message.
