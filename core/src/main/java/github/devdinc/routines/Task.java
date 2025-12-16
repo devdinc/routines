@@ -8,7 +8,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import github.devdinc.routines.config.ExceptionHandlingConfiguration.ExceptionHandleRecord;
-import github.devdinc.routines.config.impl.MARC;
+import github.devdinc.routines.config.RoutineConfiguration;
+import github.devdinc.routines.config.impl.CRBI;
 import github.devdinc.routines.util.ReflectionUtils;
 import github.devdinc.routines.util.ReflectiveCancellable;
 import github.devdinc.routines.util.Result;
@@ -18,11 +19,11 @@ import github.devdinc.routines.util.SerializableConsumer;
 /* TODO :
 + remove deprecated stuff.
 + Multi module project paper and core, remove useless build.gradle stuff
-- Introduce CRBI with config specification. rs.schedule passes config.
-- Remove useless stuff like register, keep 1 method only, especially for constructors so we can see we did not implement serializable well
-- executor -> context: "async", "virtual", executor
-- Redo test.
++ Introduce CRBI with config specification. rs.schedule passes config.
++ Remove useless stuff like register, keep 1 method only, especially for constructors so we can see we did not implement serializable well
+- executor -> context: "async", "virtual", executor, same for paper
 - Adjust readme.
+- Redo test.
 */
 
 /**
@@ -33,7 +34,8 @@ import github.devdinc.routines.util.SerializableConsumer;
  * @param <I> The type of the input to the task.
  * @param <O> The type of the output from the task.
  */
-public abstract class Task<I, O> extends MARC.ALL implements java.io.Serializable {
+@SuppressWarnings("unused")
+public abstract class Task<I, O> extends CRBI.ALL implements java.io.Serializable {
 
     @java.io.Serial
     private static final long serialVersionUID = 1L;
@@ -75,25 +77,42 @@ public abstract class Task<I, O> extends MARC.ALL implements java.io.Serializabl
      * Constructor to create a task with the given input.
      *
      * @param input               The input to the task.
-     * @param registerImmediately If true, the task will be scheduled for
-     *                            immediate execution.
+     * @param defaults            The default configuration for the task.
      */
-    protected Task(I input, boolean registerImmediately) {
+    protected Task(I input, RoutineConfiguration defaults) {
+        super(defaults);
         this.input = input;
-        if (registerImmediately)
-            scheduleExecution(Instant.now());
+    }
+
+    /**
+     * Constructor to create a task with the given input.
+     *
+     * @param input               The input to the task.
+     */
+    protected Task(I input) {
+        this(input, null);
+    }
+
+     /**
+     * Constructor to create a task with the null input.
+     */
+     protected Task() {
+        this(null, null);
+    }
+
+    @Override
+    protected RoutineConfiguration getConfig() {
+        return super.getConfig();
+    }
+
+    @Override
+    protected void setConfig(RoutineConfiguration config) {
+        super.setConfig(config);
     }
 
     // ------------------------------------------------------------
     // ABSTRACT USER LOGIC
     // ------------------------------------------------------------
-
-    /**
-     * @return Context that scheduler interacts with, great for custom schedulers.
-     */
-    protected Object context() { // Might pass it down to executor too, so not inside Schedu...Conf...tion.B
-        return null;
-    }
 
     /**
      * The core operation performed by this task. This method must be implemented

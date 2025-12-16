@@ -8,9 +8,9 @@ import github.devdinc.routines.config.ExceptionHandlingConfiguration;
  * The exception is printed to the standard error stream and the routine
  * continues.
  */
-public class LogAndContinue implements ExceptionHandlingConfiguration {
+public class LogAndContinue implements ExceptionHandlingConfiguration, java.io.Serializable {
     @Override
-    public ExceptionHandleRecord _onUncaughtException(Task<?, ?> task, Exception exception) {
+    public ExceptionHandleRecord onUncaughtException(Task<?, ?> task, Exception exception) {
         exception.printStackTrace();
         return new ExceptionHandleRecord(Strategy.CONTINUE, null);
     }

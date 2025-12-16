@@ -3,17 +3,26 @@ package github.devdinc.routines;
 import java.time.Instant;
 import java.util.List;
 
-import github.devdinc.routines.config.impl.MARC;
+import github.devdinc.routines.config.RoutineConfiguration;
+import github.devdinc.routines.config.impl.CRBI;
 import github.devdinc.routines.cron.Cron;
 
-public abstract class CronTask extends MARC.B
+@SuppressWarnings("unused")
+public abstract class CronTask extends CRBI.B
         implements java.io.Serializable {
 
     private final Cron cron;
+    private final RoutineConfiguration defaults;
 
-    protected CronTask(Cron cron) {
+    protected CronTask(Cron cron, RoutineConfiguration defaults) {
+        super(defaults);
         this.cron = cron;
+        this.defaults = defaults;
         scheduleNext();
+    }
+
+    public CronTask(Cron cron) {
+        this(cron, RoutineConfiguration.defaultRoutineConfig());
     }
 
     private void scheduleNext() {
@@ -24,7 +33,7 @@ public abstract class CronTask extends MARC.B
 
         Instant instant = next.get(0);
 
-        Task<Void, Void> task = new Task<>(null, false) {
+        Task<Void, Void> task = new Task<>(null, defaults) {
             @Override
             protected Void apply(Void i) {
                 run();

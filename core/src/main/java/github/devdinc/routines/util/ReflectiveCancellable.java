@@ -7,7 +7,7 @@ import java.lang.reflect.Method;
  * It wraps a delegate object and uses reflection to call its `cancel()` and
  * `isCancelled()` methods.
  */
-public final class ReflectiveCancellable {
+public final class ReflectiveCancellable implements java.io.Serializable {
 
     private final Object delegate;
     private final Method cancelMethod;

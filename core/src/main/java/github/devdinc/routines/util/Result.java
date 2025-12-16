@@ -14,7 +14,7 @@ import java.util.function.Function;
  * @param <R> the type of the successful result
  * @param <E> the type of the error
  */
-public abstract class Result<R, E> {
+public abstract class Result<R, E> implements java.io.Serializable {
 
     private Result() {
     }

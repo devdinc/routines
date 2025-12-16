@@ -40,6 +40,11 @@ public interface SchedulingConfiguration {
     interface B {
 
         /**
+         * @return Context that scheduler interacts with, great for custom schedulers.
+         */
+        Object context();
+
+        /**
          * The scheduler to be used for the routine.
          *
          * @return the {@link Scheduler} to be used

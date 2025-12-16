@@ -9,9 +9,7 @@ import java.util.concurrent.Executor;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
-import github.devdinc.routines.config.ExceptionHandlingConfiguration;
 import github.devdinc.routines.config.RoutineConfiguration;
-import github.devdinc.routines.util.Scheduler;
 
 /**
  * TaskBuilder is the concrete implementation of the new FluentRoutine<I>.
@@ -130,7 +128,7 @@ public final class TaskBuilder<I> implements FluentRoutine<I> {
                 ? Duration.between(Instant.now(), startTime).plus(after)
                 : after;
 
-        Task<I, ?> t = new Task<I, Object>(input, false) {
+        Task<I, ?> t = new Task<I, Object>(input, config) {
 
             @Override
             protected Object apply(I i) {
@@ -145,17 +143,6 @@ public final class TaskBuilder<I> implements FluentRoutine<I> {
             @Override
             public Duration every() {
                 return every;
-            }
-
-            @Override
-            public ExceptionHandlingConfiguration.ExceptionHandleRecord onUncaughtException(
-                    Task<?, ?> task, Exception ex) {
-                return config.getExcc()._onUncaughtException(task, ex);
-            }
-
-            @Override
-            public Scheduler scheduler() {
-                return config.getSc().scheduler();
             }
 
             @Override

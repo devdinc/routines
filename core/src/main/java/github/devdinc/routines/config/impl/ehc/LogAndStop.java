@@ -8,9 +8,9 @@ import github.devdinc.routines.config.ExceptionHandlingConfiguration;
  * The exception is printed to the standard error stream and all routines are
  * stopped.
  */
-public class LogAndStop implements ExceptionHandlingConfiguration {
+public class LogAndStop implements ExceptionHandlingConfiguration, java.io.Serializable {
     @Override
-    public ExceptionHandleRecord _onUncaughtException(Task<?, ?> task, Exception exception) {
+    public ExceptionHandleRecord onUncaughtException(Task<?, ?> task, Exception exception) {
         exception.printStackTrace();
         return new ExceptionHandleRecord(Strategy.STOP_ALL, null);
     }

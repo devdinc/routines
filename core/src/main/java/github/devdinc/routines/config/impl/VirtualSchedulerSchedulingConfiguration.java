@@ -11,7 +11,7 @@ import github.devdinc.routines.util.Scheduler;
 /**
  * A generic implementation of {@link SchedulingConfiguration}.
  */
-public class VirtualSchedulerSchedulingConfiguration implements SchedulingConfiguration.ALL {
+public class VirtualSchedulerSchedulingConfiguration implements SchedulingConfiguration.ALL, java.io.Serializable {
 
     @Override
     public Duration after() {
@@ -21,6 +21,11 @@ public class VirtualSchedulerSchedulingConfiguration implements SchedulingConfig
     @Override
     public Duration every() {
         return Duration.ZERO;
+    }
+
+    @Override
+    public Object context() {
+        return null;
     }
 
     @Override

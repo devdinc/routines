@@ -16,7 +16,7 @@ public interface ExceptionHandlingConfiguration {
      * @return An {@link ExceptionHandleRecord} that specifies the strategy to be
      *         used and any output.
      */
-    ExceptionHandleRecord _onUncaughtException(Task<?, ?> task, Exception exception);
+    ExceptionHandleRecord onUncaughtException(Task<?, ?> task, Exception exception);
 
     /**
      * This enum defines the possible strategies for handling exceptions.

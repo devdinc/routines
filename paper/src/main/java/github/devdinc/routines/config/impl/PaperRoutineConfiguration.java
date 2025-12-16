@@ -29,6 +29,11 @@ public class PaperRoutineConfiguration {
                         return new PaperScheduler(plugin);
                     }
 
+                    @Override
+                    public Object context() {
+                        return null;
+                    }
+
                 });
     }
 }

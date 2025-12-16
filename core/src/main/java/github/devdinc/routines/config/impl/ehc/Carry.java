@@ -10,9 +10,9 @@ import github.devdinc.routines.util.Result;
  * The exception is propagated to the next Task. Task's result type must be a
  * {@link Result}<1, 2> where 2 is an {@link Exception}.
  */
-public class Carry implements ExceptionHandlingConfiguration {
+public class Carry implements ExceptionHandlingConfiguration, java.io.Serializable {
     @Override
-    public ExceptionHandleRecord _onUncaughtException(Task<?, ?> task, Exception exception) {
+    public ExceptionHandleRecord onUncaughtException(Task<?, ?> task, Exception exception) {
         final boolean isResultTaskWithExceptionError = ReflectionUtils.resultSecondTypeIsException(task.getClass());
         if (!isResultTaskWithExceptionError)
             throw new IllegalStateException("Not a result task with Exception Error");

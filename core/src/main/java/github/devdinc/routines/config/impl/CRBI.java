@@ -9,36 +9,56 @@ import github.devdinc.routines.config.SchedulingConfiguration;
 import github.devdinc.routines.util.Scheduler;
 
 /**
- * Methodic Abstract Routine Configuration, providing default
- * configuration logic via abstract classes rather than interfaces.
+ * Configuration Resolution By Inheritance, providing default
+ * configuration logic via classes.
  */
-public abstract class MARC {
+public abstract class CRBI {
 
     /**
-     * Base configuration class, equivalent to MARC.B.
-     * Provides inherited default implementations.
+     * Base configuration class, equivalent to CRBI.B.
+     * Provides inherited implementations.
      */
     public abstract static class B
             implements /* ExceptionHandlingConfiguration, */
-            SchedulingConfiguration.B {
+            SchedulingConfiguration.B, java.io.Serializable {
 
-        protected RoutineConfiguration config = RoutineConfiguration.defaultRoutineConfig();
+        protected RoutineConfiguration config;
+        public B(RoutineConfiguration config) {
+            this.config = config;
+        }
+
+        protected RoutineConfiguration getConfig() {
+            return config;
+        }
+
+        protected void setConfig(RoutineConfiguration config) {
+            this.config = config;
+        }
 
         protected ExceptionHandlingConfiguration.ExceptionHandleRecord onUncaughtException(Task<?, ?> task,
                 Exception exception) {
-            return config.getExcc()._onUncaughtException(task, exception);
+            return config.getExcc().onUncaughtException(task, exception);
         }
 
         @Override
         public Scheduler scheduler() {
             return config.getSc().scheduler();
         }
+
+        @Override
+        public Object context() {
+            return config.getSc().context();
+        }
     }
 
     /**
-     * Full configuration class, equivalent to MARC.ALL.
+     * Full configuration class, equivalent to CRBI.ALL.
      */
     public abstract static class ALL extends B implements SchedulingConfiguration.A {
+
+        public ALL(RoutineConfiguration config) {
+            super(config);
+        }
 
         @Override
         public Duration after() {

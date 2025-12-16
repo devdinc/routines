@@ -23,10 +23,12 @@ public class RoutineService implements java.io.Serializable {
     }
 
     public void schedule(Task<?, ?> task) {
-        task.scheduleExecution(Instant.now());
+        schedule(task, Instant.now());
     }
 
     public void schedule(Task<?, ?> task, Instant initAt) {
+        if (task.getConfig() == null)
+            task.setConfig(fc);
         task.scheduleExecution(initAt);
     }
 
