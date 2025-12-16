@@ -1,7 +1,6 @@
 package github.devdinc.routines;
 
 import java.time.Duration;
-import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -18,8 +17,6 @@ import java.util.function.Supplier;
 public interface FluentRoutine<I> {
 
     FluentRoutine<I> carryExecutor();
-
-    FluentRoutine<I> async(Executor executor);
 
     FluentRoutine<I> after(Duration duration);
 

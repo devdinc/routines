@@ -10,6 +10,7 @@ subprojects {
         publications {
             maven(MavenPublication) {
                 from components.java
+                artifactId = "routines-${project.name}"
             }
         }
     }

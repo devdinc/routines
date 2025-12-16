@@ -17,13 +17,9 @@ import github.devdinc.routines.util.Scheduler;
 import github.devdinc.routines.util.SerializableConsumer;
 
 /* TODO :
-+ remove deprecated stuff.
-+ Multi module project paper and core, remove useless build.gradle stuff
-+ Introduce CRBI with config specification. rs.schedule passes config.
-+ Remove useless stuff like register, keep 1 method only, especially for constructors so we can see we did not implement serializable well
-- executor -> context: "async", "virtual", executor, same for paper
 - Adjust readme.
 - Redo test.
+- Redo paper scheduler
 */
 
 /**
@@ -344,8 +340,10 @@ public abstract class Task<I, O> extends CRBI.ALL implements java.io.Serializabl
             markComplete(out);
 
         Task<O, ?> nxt = next(out);
-        if (willNotRepeat() && nxt != null)
+        if (willNotRepeat() && nxt != null) {
+            nxt.setConfig(config);
             nxt.scheduleExecution(Instant.now());
+        }
     }
 
     /**

@@ -82,12 +82,6 @@ public final class TaskBuilder<I> implements FluentRoutine<I> {
     }
 
     @Override
-    public FluentRoutine<I> async(Executor ex) {
-        this.executor = ex;
-        return this;
-    }
-
-    @Override
     public FluentRoutine<I> carryExecutor() {
         if (previousBuilder != null)
             this.executor = previousBuilder.executor;

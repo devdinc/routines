@@ -29,8 +29,9 @@ public class PaperScheduler implements Scheduler {
     public ReflectiveCancellable schedule(
             Runnable runnable,
             Duration after,
-            Duration every,
-            Object contx) {
+            Duration every) {
+
+        PaperContext contx = null; // TODO
 
         if (!(contx instanceof PaperContext context))
             throw new IllegalArgumentException("Context must be of type PaperContext");

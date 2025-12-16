@@ -22,7 +22,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.devdinc:routines:<version>'
+    implementation 'com.github.devdinc:routines-core:<version>'
 }
 ~~~
 
@@ -37,7 +37,7 @@ dependencies {
 
 <dependency>
     <groupId>com.github.devdinc</groupId>
-    <artifactId>routines</artifactId>
+    <artifactId>routines-core</artifactId>
     <version>{version}</version>
 </dependency>
 ~~~
@@ -144,6 +144,49 @@ public ExceptionHandleRecord onUncaughtException(Task<?, ?> task, Exception ex) 
     return new ExceptionHandleRecord(Strategy.STOP_ALL, null);
 }
 ~~~
+
+---
+
+## Context (Advanced)
+An opaque object whose meaning is defined exclusively by the scheduler implementation.
+The `SchedulingConfiguration` interface does not prescribe:
+* what context represents
+* how it is interpreted
+* whether it is an `Executor`, a thread model, or something else
+
+Only the **scheduler** decides how to interpret it.
+
+### How This Scheduler Defines `context`
+
+In `VirtualSchedulerSchedulingConfiguration` (default in core), the scheduler chooses to interpret `context()` as an `ExecutorContext`.
+
+```java
+ExecutorContext context = context();
+context = context == null ? ExecutorContext.INLINE : context;
+context.getContext().execute(task);
+```
+
+So, in this implementation only:
+
+* `context` is expected to be an `ExecutorContext`
+* `ExecutorContext` resolves to a Java `Executor`
+* That `Executor` determines how the task is executed
+
+This is an implementation decision, not an API guarantee.
+
+---
+
+#### How Each Context Is Handled By This Scheduler
+
+| Context Value | Scheduler Interpretation    | Result                      |
+| ------------- | --------------------------- | --------------------------- |
+| `null`        | Default to `INLINE`         | Task runs inline            |
+| `INLINE`      | `Runnable::run`             | Same thread                 |
+| `ASYNC`       | `ForkJoinPool.commonPool()` | Pooled execution            |
+| `VIRTUAL`     | Virtual-thread executor     | One virtual thread per task |
+| `PROVIDER`    | User-supplied executor      | Fully custom                |
+
+Again: these meanings exist only because this scheduler assigns them.
 
 ---
 
