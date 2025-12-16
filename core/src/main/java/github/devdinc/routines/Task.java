@@ -411,7 +411,7 @@ public abstract class Task<I, O> extends CRBI.ALL implements java.io.Serializabl
         if (sched == null)
             throw new IllegalStateException("No scheduler available");
 
-        ReflectiveCancellable tok = sched.schedule(this::runInternalProtected, delay, every, context());
+        ReflectiveCancellable tok = sched.schedule(this::runInternalProtected, delay, every);
 
         tokenRef.set(tok);
         return tok;
