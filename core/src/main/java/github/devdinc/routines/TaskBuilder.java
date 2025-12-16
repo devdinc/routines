@@ -2,12 +2,9 @@ package github.devdinc.routines;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.Temporal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.function.BooleanSupplier;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import github.devdinc.routines.config.RoutineConfiguration;
 
@@ -25,7 +22,7 @@ public final class TaskBuilder<I> implements FluentRoutine<I> {
     private final TaskBuilder<?> previousBuilder;
 
     /** Executed task for this stage */
-    private Task<I, ?> task;
+    private volatile Task<Void,?> task;
 
     /** The transformation applied by this stage */
     private Function<? super I, ?> func;
@@ -34,14 +31,13 @@ public final class TaskBuilder<I> implements FluentRoutine<I> {
     private Duration after = Duration.ZERO;
     private Duration every = Duration.ZERO;
     private Executor executor;
-    private final List<BooleanSupplier> conditions = new ArrayList<>();
-    private Temporal startTime;
+    private Instant startTime;
 
     private Object ctx;
 
     /** --- Constructors --- */
 
-    public TaskBuilder(RoutineConfiguration config, Temporal startTime) {
+    public TaskBuilder(RoutineConfiguration config, Instant startTime) {
         this.config = config;
         this.previousBuilder = null;
         this.startTime = startTime;
@@ -88,11 +84,7 @@ public final class TaskBuilder<I> implements FluentRoutine<I> {
         return this;
     }
 
-    /** Additional API */
-    public TaskBuilder<I> conditional(BooleanSupplier... c) {
-        conditions.addAll(List.of(c));
-        return this;
-    }
+    protected Supplier<I> inputSupplier;
 
     /**
      * ------------------------------------------------------------
@@ -105,33 +97,18 @@ public final class TaskBuilder<I> implements FluentRoutine<I> {
         if (func == null)
             throw new IllegalStateException("apply(Function) was not provided");
 
-        if (previousBuilder != null && previousBuilder.task != null) {
+        
 
-            previousBuilder.task.onComplete(prevOut -> {
-                I input = (I) prevOut;
-                startThisStage(input);
-            });
-
-        } else {
-            startThisStage(null);
-        }
-    }
-
-    private void startThisStage(I input) {
-        final Duration startDelay = (startTime != null)
-                ? Duration.between(Instant.now(), startTime).plus(after)
-                : after;
-
-        Task<I, ?> t = new Task<I, Object>(input, config) {
+        Task<Void, ?> t = new Task<Void, Object>(null, config) {
 
             @Override
-            protected Object apply(I i) {
-                return func.apply(i);
+            protected Object apply(Void i) {
+                return func.apply(inputSupplier.get());
             }
 
             @Override
             public Duration after() {
-                return startDelay;
+                return after;
             }
 
             @Override
@@ -145,13 +122,27 @@ public final class TaskBuilder<I> implements FluentRoutine<I> {
             }
         };
 
-        t.scheduleExecution(Instant.now());
         this.task = t;
+
+        if (previousBuilder != null) {
+
+            previousBuilder.task.onComplete(prevOut -> {
+                I input = (I) prevOut;
+                inputSupplier = () -> input;
+                this.task.scheduleExecution(startTime);
+            });
+
+        } else {
+            inputSupplier = () -> null;
+            this.task.scheduleExecution(startTime);
+        }
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public I join() {
+        if (previousBuilder == null)
+            throw new IllegalStateException("Cannot join root stage");
         return (I) previousBuilder.task.join();
     }
 
