@@ -9,7 +9,7 @@ A lightweight, fluent Java library for scheduling, chaining, and class-based asy
 ---
 
 ## Requirements
-- **Java 21+** (Requires Virtual Threads support [To be honest you could probably replace VirtualSchedulerSchedulingConfiguration in a fork, and it would probably work fine with lower versions]).
+- **Java 21+** (Requires Virtual Threads support).
 
 ---
 
