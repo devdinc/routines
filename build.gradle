@@ -5,12 +5,18 @@ allprojects {
 subprojects {
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
+    
+    def artifactBaseName = "${rootProject.name}-${project.name}"
+
+    tasks.withType(Jar) {
+        archiveBaseName.set(artifactBaseName)
+    }
 
     publishing {
         publications {
             maven(MavenPublication) {
                 from components.java
-                artifactId = "routines-${project.name}"
+                artifactId = artifactBaseName
             }
         }
     }
