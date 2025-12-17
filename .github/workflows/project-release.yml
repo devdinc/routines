@@ -84,14 +84,28 @@ jobs:
         run: |
           mode="${{ steps.parse.outputs.mode }}"
           current="${{ steps.version.outputs.current }}"
-
+      
           if [ "$mode" = "set" ]; then
             new="${{ steps.parse.outputs.target }}"
           else
             delta="${{ steps.parse.outputs.delta }}"
             IFS='.' read -r cM cN cP <<< "$current"
             IFS='.' read -r dM dN dP <<< "$delta"
-            new="$((cM + dM)).$((cN + dN)).$((cP + dP))"
+      
+            # Compute new version according to rules:
+            newM=$((cM + dM))
+            newN=$((cN + dN))
+            newP=$((cP + dP))
+      
+            # Reset lower components if higher ones are incremented from zero
+            if [ "$dM" -gt 0 ]; then
+              newN=$dN
+              newP=$dP
+            elif [ "$dN" -gt 0 ]; then
+              newP=$dP
+            fi
+      
+            new="$newM.$newN.$newP"
           fi
 
           echo "new=$new" >> $GITHUB_OUTPUT
