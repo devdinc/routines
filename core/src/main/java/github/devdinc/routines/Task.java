@@ -16,12 +16,6 @@ import github.devdinc.routines.util.Result;
 import github.devdinc.routines.util.Scheduler;
 import github.devdinc.routines.util.SerializableConsumer;
 
-/* TODO :
-- Adjust readme.
-- Redo test.
-- Redo paper scheduler
-*/
-
 /**
  * An abstract base class for defining tasks that can be executed
  * asynchronously, scheduled to run at specific times or intervals, and chained

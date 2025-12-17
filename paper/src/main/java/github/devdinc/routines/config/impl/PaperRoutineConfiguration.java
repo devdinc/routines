@@ -4,6 +4,7 @@ import java.time.Duration;
 
 import org.bukkit.plugin.Plugin;
 
+import github.devdinc.routines.PaperContext;
 import github.devdinc.routines.config.RoutineConfiguration;
 import github.devdinc.routines.config.SchedulingConfiguration;
 import github.devdinc.routines.config.impl.ehc.LogAndContinue;
@@ -26,11 +27,11 @@ public class PaperRoutineConfiguration {
 
                     @Override
                     public Scheduler scheduler() {
-                        return new PaperScheduler(plugin);
+                        return new PaperScheduler(plugin, context());
                     }
 
                     @Override
-                    public Object context() {
+                    public PaperContext context() {
                         return null;
                     }
 
