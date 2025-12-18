@@ -118,25 +118,6 @@ public class PaperSchedulerConfiguration implements SchedulingConfiguration.ALL 
         };
     }
 
-    static class ScheduledDelegate {
-        private final ScheduledTask task;
-        private final GenericCancellable cancellable;
-
-        ScheduledDelegate(ScheduledTask task, GenericCancellable cancellable) {
-            this.task = task;
-            this.cancellable = cancellable;
-        }
-
-        public void cancel() {
-            cancellable.cancel();
-            if (task != null) task.cancel();
-        }
-
-        public boolean isCancelled() {
-            return cancellable.isCancelled() || task == null || task.isCancelled();
-        }
-    }
-
     @Override
     public PaperContext context() {
         return null;
