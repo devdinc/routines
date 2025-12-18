@@ -12,7 +12,6 @@ import github.devdinc.routines.util.Scheduler;
 
 public class PaperRoutineConfiguration {
     public static RoutineConfiguration paperRoutineConfiguration(Plugin plugin) {
-        return new RoutineConfiguration(new LogAndContinue(),
-                new PaperSchedulerConfiguration(plugin));
+        return new RoutineConfiguration(new LogAndContinue(), new PaperSchedulerConfiguration(plugin));
     }
 }
