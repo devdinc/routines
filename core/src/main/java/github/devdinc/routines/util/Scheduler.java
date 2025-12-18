@@ -13,7 +13,8 @@ public interface Scheduler {
      * @param task    The task to be scheduled.
      * @param after   The initial delay before the first execution.
      * @param every   The period between subsequent executions.
+     * @param context The context handled by scheduler.
      * @return A {@link ReflectiveCancellable} that can be used to cancel the task.
      */
-    ReflectiveCancellable schedule(Runnable task, Duration after, Duration every);
+    ReflectiveCancellable schedule(Runnable task, Duration after, Duration every, Object context);
 }

@@ -76,24 +76,23 @@ public class VirtualSchedulerSchedulingConfiguration implements SchedulingConfig
 
     @Override
     public Scheduler scheduler() {
-        return (task, after, every) -> {
+        return (task, after, every, context) -> {
             GenericCancellable token = new GenericCancellable();
 
             Thread.startVirtualThread(() -> {
-                ExecutorContext context = context();
-                context = context == null ? ExecutorContext.INLINE : context;
+                ExecutorContext ctx = context == null ? ExecutorContext.INLINE : (ExecutorContext) context;
                 
                 if (after.isPositive())
                     LockSupport.parkNanos(after.toNanos());
                 if (token.isCancelled())
                     return;
                 if (!every.isPositive()) {
-                    context.getContext().execute(task);
+                    ctx.getContext().execute(task);
                     return;
                 }
 
                 while (!token.isCancelled()) {
-                    context.getContext().execute(task);
+                    ctx.getContext().execute(task);
                     LockSupport.parkNanos(every.toNanos());
                 }
             });

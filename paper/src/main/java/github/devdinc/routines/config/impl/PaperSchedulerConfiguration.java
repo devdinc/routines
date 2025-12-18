@@ -2,9 +2,6 @@ package github.devdinc.routines.config.impl;
 
 import java.time.Duration;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.locks.LockSupport;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -43,8 +40,8 @@ public class PaperSchedulerConfiguration implements SchedulingConfiguration.ALL 
 
     @Override
     public Scheduler scheduler() {
-        return (task, after, every) -> {
-            PaperContext context = context();
+        return (task, after, every, ctx) -> {
+            PaperContext context = (PaperContext) ctx;
             if (context == null) throw new IllegalArgumentException("PaperContext cannot be null");
             GenericCancellable token = new GenericCancellable();
             Object anchor = context.anchor();

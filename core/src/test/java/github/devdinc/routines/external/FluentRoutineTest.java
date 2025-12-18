@@ -2,7 +2,9 @@ package github.devdinc.routines.external;
 
 import org.junit.jupiter.api.Test;
 
+import github.devdinc.routines.FluentRoutine;
 import github.devdinc.routines.RoutineService;
+import github.devdinc.routines.config.impl.VirtualSchedulerSchedulingConfiguration.ExecutorContext;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -145,6 +147,16 @@ class FluentRoutineTest {
         assertThrows(IllegalStateException.class, () -> {
             service.fluent(Instant.now()).join();
         });
+    }
+
+    @Test
+    void testTaskContext() {
+        RoutineService rs = new RoutineService();
+        FluentRoutine<Boolean> task = rs.fluent(Instant.now())
+            .context(ExecutorContext.ASYNC).supply(()-> Thread.currentThread().isVirtual() == false)
+            .accept(b -> assertTrue(b))
+            .context(ExecutorContext.VIRTUAL).supply(()-> Thread.currentThread().isVirtual() == true);
+        assertTrue(task.join());
     }
 
 }

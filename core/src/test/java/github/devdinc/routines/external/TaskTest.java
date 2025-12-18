@@ -4,11 +4,13 @@ import github.devdinc.routines.RoutineService;
 import github.devdinc.routines.Task;
 import github.devdinc.routines.config.ExceptionHandlingConfiguration.ExceptionHandleRecord;
 import github.devdinc.routines.config.ExceptionHandlingConfiguration.Strategy;
+import github.devdinc.routines.config.impl.VirtualSchedulerSchedulingConfiguration.ExecutorContext;
 import github.devdinc.routines.util.Result;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -273,6 +275,25 @@ class TaskTest {
         }
 
         assertNotNull(restored);
+    }
+
+    @Test
+    void testTaskContext() {
+        RoutineService rs = new RoutineService();
+        Task<Void, Boolean> task = new Task<>(null) {
+            @Override
+            protected Boolean apply(Void input) {
+                return Thread.currentThread().isVirtual() == false; // Since default scheduler uses virtual thread
+            }
+
+            @Override
+            public ExecutorContext context() {
+                return ExecutorContext.ASYNC;
+            }
+        };
+
+        rs.schedule(task, Instant.now()); // uses default scheduler
+        assertTrue(task.join());
     }
 
 }
